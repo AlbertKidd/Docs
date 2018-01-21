@@ -1,4 +1,9 @@
-# ActiveMQ 指南
+---
+layout: post
+title: ActiveMQ 开发指南
+description: 一篇ActiveMQ的不完全指南 
+---
+
 
 ## 1. 简介
 ActiveMQ 是最流行，最强大的开源消息库，有以下特点：
@@ -18,10 +23,10 @@ ActiveMQ 是最流行，最强大的开源消息库，有以下特点：
 * broker: 消息服务器，负责接受、处理、分发消息；
 
 * queue: 消息管道，发送端与接收端只能一对一传输消息；
-![queue](queue.png)
+![queue](/img/queue.png)
 
 * topic: 消息主题，接收端订阅topic后可以收到发送端发出的消息；
-![topic](./topic.png)
+![topic](/img/topic.png)
 
 * producer: 消息的发送者
 
@@ -57,22 +62,25 @@ ActiveMQ 是最流行，最强大的开源消息库，有以下特点：
 下面我们以openwire作为默认消息协议，使用ActiveMQ进行Java消息开发；
 
 注：ActiveMQ开发须依赖activemq-core.jar，请使用Maven或Gradle进行构建。
-```
-<!--Maven-->
+
+Maven
+```xml
 <dependency>
     <groupId>org.apache.activemq</groupId>
     <artifactId>activemq-core</artifactId>
     <version>5.7.0</version>
 </dependency>
+```
 
-//Gradle
+Gradle
+```groovy
 compile group: 'org.apache.activemq', name: 'activemq-core', version:'5.7.0'
 ```
 
 ### 3.1 连接broker
 
 不论是发送消息，还是接受消息，首先需要连接broker，代码如下：
-```
+```java
 //broker连接信息，broker各协议端口配置信息位于broker所在目录的conf/activemq.xml中
 ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(null, null, connURL);
 Connection connection = factory.createConnection();
@@ -85,7 +93,8 @@ Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
 ### 3.2 发送消息
 发送消息首先需要确定消息类型是Topic还是Queue来创建producer，然后创建消息进行发送
-```
+
+```java
 //创建/连接Topic
 Destination dest = new ActiveMQTopic(“topicName”);
 //创建/连接Queue
@@ -103,7 +112,8 @@ producer.send(textMessage);
 
 ### 3.3 接受消息
 与发送消息一致，接受消息同样需要先确定Destination是Queue还是Topic，代码如下：
-```
+
+```java
 //创建/连接Topic
 Destination dest = new ActiveMQTopic(“topicName”);
 //创建/连接Queue
@@ -134,7 +144,8 @@ consumer.setMessageListener(new MessageListener() {
 
 * ObjectMessage
 发送/接受序列化的对象
-```
+
+```java
 //发送ObjectMessage，传入的对象必须是序列化对象
 ObjectMessage message = session.createObjectMessage(object);
 producer.send(message);
@@ -145,7 +156,8 @@ Object object = ((ObjectMessage)message).getObject();
 
 * BytesMessage
 发送/接受字节消息
-```
+
+```java
 //发送BytesMessage
 BytesMessage message = session.createBytesMessage();
 message.writeBytes(bytes);
@@ -158,7 +170,8 @@ byte[] b = new byte[1024]
 
 * StreamMessage
 发送/接受stream对象，用法与BytesMessage类似
-```
+
+```java
 //发送StreamMessage
 StreamMessage message = session.createStreamMessage();
 message.writeBytes(bytes);
@@ -171,7 +184,8 @@ byte[] b = new byte[1024]
 
 * MapMessage
 发送/接受Map消息
-```
+
+```java
 //发送MapMessage
 MapMessage message = session.createMapMessage();
 message.setInt("age", 11);
@@ -196,14 +210,16 @@ AMQ_SCHEDULED_REPEAT | int | 重复投递次数
 AMQ_SCHEDULED_CRON | String | Cron表达式
 
 延迟60s：
-```
+
+```java
 long time = 60 * 1000;
 message.setLongProperty(ScheduledMessage.AMQ_SCHEDULED_DELAY, time);
 producer.send(message);
 ```
 
 初始延迟30s，投递10次，间隔10s：
-```
+
+```java
 long delay = 30 * 1000;
 long period = 10 * 1000;
 int repeat = 9;
@@ -214,7 +230,8 @@ producer.send(message);
 ```
 
 使用CRON表达式：
-```
+
+```java
 message.setStringProperty(ScheduledMessage.AMQ_SCHEDULED_CRON, "0 * * * *");
 producer.send(message);	
 ```
@@ -224,7 +241,8 @@ producer.send(message);
 ActiveMQ提供了一种消息过滤机制，首先在发送端使用`set**Property()`方法设置消息的特定属性，然后在接收端创建Consumer时，指定过滤条件，这样消息接收端只能收到符合过滤条件的消息。示例如下：
 
 发送端：
-```
+
+```java
 //设置消息的属性并发送
 Message message = session.createTextMessage("Hello");
 message.setStringProperty("name", "Kidd");
@@ -233,7 +251,8 @@ producer.send(dest, message);
 ```
 
 接受端：
-```
+
+```java
 //创建Consumer时设置过滤条件，过滤语句写法类似SQL，符合SQL-92标准即可
 Consumer consumer = session.createConsumer(dest, "age > 10 and name = 'Kidd'");
 ```
@@ -247,7 +266,9 @@ ActiveMQ支持消息持久化，即将未投递的消息保存在broker中，即
 ##### 4.4.1.1 发送端持久化设置
 
 发送端持久化设置很简单，只需一行代码：
-`producer.setDeliveryMode(DeliveryMode.PERSISTENT);`
+```java 
+producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+```
 
 ##### 4.4.1.2 Topic消息持久化设置
 
@@ -258,7 +279,8 @@ Topic每个消息都可能有多个消费者，默认情况下，发送端发出
 简而言之，持久化订阅与非持久化订阅的区别在于能否接收自身离线状态下错过的消息；
 
 持久化订阅配置如下：
-```
+
+```java
 //首先需要在接收端创建连接后设置ClientId
 connection.setClientID("KiddClientId");
 
@@ -278,7 +300,8 @@ ActiveMQ支持多种消息持久化的储存方式，就目前的版本来说（
 数据库的存储方式，最大的优点可以看到消息是如何存储的，可以通过SQL查询消息消费状态，可以查看消息内容，这是其他持久化方式所不具备的。但其最大的缺点在于性能，相较其他储存方式要慢得多。
 
 以mysql为例，jdbc配置如下：
-```
+
+```xml
 <persistenceAdapter>
     <jdbcPersistenceAdapter dataSource="kidd-mysql"/>
 </persistenceAdapter>
@@ -299,7 +322,8 @@ ActiveMQ支持多种消息持久化的储存方式，就目前的版本来说（
 kahaDB是从ActiveMQ 5.4开始默认的持久化插件，KahaDb恢复时间远远小于JDBC并且使用更少的数据文件。kahaDB的持久化机制是基于日志文件，索引和缓存，所有的Destination都使用一个索引文件。它可以支持10000个连接，每个连接都是一个独立的Queue，足以满足大部分应用场景。
 
 配置文件如下：
-```
+
+```xml
 <persistenceAdapter>
     <kahaDB directory="${activemq.data}/kahadb"/>
 </persistenceAdapter>
@@ -310,7 +334,8 @@ kahaDB是从ActiveMQ 5.4开始默认的持久化插件，KahaDb恢复时间远�
 从ActiveMQ 5.6版本之后，又推出了LevelDB的持久化引擎。LevelDB持久化性能高于KahaDB，虽然目前默认的持久化方式仍然是KahaDB，但是 LevelDB是将来的趋势。并且，在ActiveMQ 5.9版本提供了基于LevelDB和Zookeeper的数据复制方式，用于Master-slave方式的首选数据复制方案。LevelDB使用自定义的索引代替常用的BTree索引。
 
 配置文件如下：
-```
+
+```xml
 <persistenceAdapter>
     <levelDB directory="${activemq.data}/activemq-data"/>
 </persistenceAdapter>
@@ -320,10 +345,11 @@ kahaDB是从ActiveMQ 5.4开始默认的持久化插件，KahaDb恢复时间远�
 ### 4.1 broker桥接
 ActiveMQ支持broker的桥接，可以单向将broker A收到的消息转发至broker B中，也可以双向地是broker A与broker B共享消息，如下图：
 
-![brokerNetwork](brokerNet.png)
+![brokerNetwork](/img/brokerNet.png)
 
 桥接的配置很简单，静态单向桥接：
-```
+
+```xml
 <networkConnectors>
   <networkConnector uri="static:(tcp://host1:61616,tcp://host2:61616,tcp://..)"/>
 </networkConnectors>
@@ -331,7 +357,7 @@ ActiveMQ支持broker的桥接，可以单向将broker A收到的消息转发至b
 
 静态双向桥接，在单向桥接的基础上加了duplex的参数：
 
-```
+```xml
 <networkConnectors>
   <networkConnector duplex="true" uri="static:(tcp://host1:61616)"/>
 </networkConnectors>
