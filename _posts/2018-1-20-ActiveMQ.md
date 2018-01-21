@@ -23,10 +23,10 @@ ActiveMQ 是最流行，最强大的开源消息库，有以下特点：
 * broker: 消息服务器，负责接受、处理、分发消息；
 
 * queue: 消息管道，发送端与接收端只能一对一传输消息；
-![queue](/img/queue.png)
+![queue](https://raw.githubusercontent.com/AlbertKidd/Docs/master/img/queue.png)
 
 * topic: 消息主题，接收端订阅topic后可以收到发送端发出的消息；
-![topic](/img/topic.png)
+![topic](https://raw.githubusercontent.com/AlbertKidd/Docs/master/img/Topic.png)
 
 * producer: 消息的发送者
 
@@ -345,7 +345,7 @@ kahaDB是从ActiveMQ 5.4开始默认的持久化插件，KahaDb恢复时间远�
 ### 4.1 broker桥接
 ActiveMQ支持broker的桥接，可以单向将broker A收到的消息转发至broker B中，也可以双向地是broker A与broker B共享消息，如下图：
 
-![brokerNetwork](/img/brokerNet.png)
+![brokerNetwork](https://raw.githubusercontent.com/AlbertKidd/Docs/master/img/brokerNet.png)
 
 桥接的配置很简单，静态单向桥接：
 
